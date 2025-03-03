@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PST Buddy - Polaris School of Technology</title>
+    <!-- External Resources -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header Section -->
+    <header class="header">
+        <div class="logo">PST</div>
+        <h1>PST Buddy</h1>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Welcome Message -->
+        <div class="welcome-section">
+            <h1>Welcome to PST Buddy!</h1>
+            <p>Ask me anything about Polaris School of Technology!<br>
+            I can help with admissions, courses, faculty info, and more.</p>
+        </div>
+
+        <!-- Chat Messages Container -->
+        <div class="chat-messages" id="chatMessages"></div>
+
+        <!-- Input Field -->
+        <div class="input-container" style="display: flex; align-items: center;">
+            <input type="text" class="message-input" placeholder="Type your message..." style="flex: 1;">
+            <button onclick="sendMessage()" style="margin-left: 10px; padding: 10px; background-color: #FFD700; color: white; border: none; cursor: pointer;">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </main>
+
+    <!-- Application Script -->
+    <script src="script.js"></script>
+    <script>
+        function sendMessage() {
+            const input = document.querySelector('.message-input');
+            const message = input.value;
+            if (message.trim() !== '') {
+                const chatMessages = document.getElementById('chatMessages');
+                const newMessage = document.createElement('div');
+                newMessage.textContent = message;
+                chatMessages.appendChild(newMessage);
+                input.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
