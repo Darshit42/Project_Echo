@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-=======
-
-
->>>>>>> 2a74d28 (Initial commit for Project Echo)
 langchain==0.3.20
 langchain-openai==0.3.8
 chromadb==0.6.3
@@ -14,8 +9,5 @@ flask==3.0.3
 python-dotenv==1.0.1
 tiktoken==0.9.0
 gunicorn==20.1.0
-<<<<<<< HEAD
 numpy==1.26.4  # Critical for ChromaDB compatibility
-=======
-numpy==1.26.4  # Critical for ChromaDB compatibility
->>>>>>> 2a74d28 (Initial commit for Project Echo)
+
