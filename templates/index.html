@@ -15,7 +15,6 @@
   <div class="sidebar">
     <div class="header">
       <div class="header-title">
-        <span><img src="./assets/polaris.png" alt="" height="25" style="margin-top: 30%;"></span>
         <span>My Chats</span>
       </div>
     </div>
@@ -42,15 +41,11 @@
       </div>
     </div>
     
-    <button class="new-chat-btn" id="newChatBtn">
-      <span>New chat</span>
-
-    </button>
   </div>
 
   <div class="main-container">
     <div class="main-header">
-      <div class="main-logo">PST</div>
+      <span><img src="{{ url_for('static', filename='./assets/polaris.png') }}" alt="" height="45" style="margin-top: 30%;"></span>
       <h1>PST Buddy</h1>
     </div>
 

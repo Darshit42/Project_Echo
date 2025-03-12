@@ -3,17 +3,18 @@ import os
 import requests
 from langchain_openai.embeddings import AzureOpenAIEmbeddings
 from langchain_chroma import Chroma
-from langchain.document_loaders import PyPDFLoader
+# from langchain.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # Initialize Flask app
 app = Flask(__name__)
 
 # Set up environment variables
-os.environ["AZURE_ENDPOINT"] = "endpoint"
+os.environ["AZURE_ENDPOINT"] = "https://tb-lms-azure-openai.openai.azure.com"
 os.environ["AZURE_DEPLOYMENT"] = "text-embedding-3-large"
 os.environ["OPENAI_API_VERSION"] = "2023-05-15"
-api_key = "api"
+api_key = "04f853304acb4c8887d724158fcffe79"
 
 # Define functions before Flask routes
 embeddings = AzureOpenAIEmbeddings(
