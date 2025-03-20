@@ -33,7 +33,6 @@ all_splits = text_splitter.split_documents(docs)
 vector_store = Chroma.from_documents(documents=all_splits, embedding=embeddings)
 retriever_ = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 3})
 
-# Function to generate responses
 def Azure_API_Call(prompt):
     API_KEY = os.getenv("AZURE_API_KEY")
     headers = {
@@ -60,7 +59,6 @@ def Azure_API_Call(prompt):
         print(f"An error occurred during the Azure OpenAI API call: {e}")
         return "Oops! Something went wrong. Please try again later."
 
-# Main Chatbot Function
 def pst_buddy(question, context_from_docs, tone):
     
     tone = """
@@ -68,13 +66,11 @@ def pst_buddy(question, context_from_docs, tone):
 
     Important: Always respond in the same language as the user's question. If the user asks in English, reply in English. If the question is in another language, respond accordingly.
     """
-    # Retrieve context from the documents
     context_from_docs = ""
     for doc in retriever_.get_relevant_documents(question):
         content = doc.page_content.replace('\n', ' ')
         context_from_docs += ' ' + content
 
-    # Prompt Formatting
     prompt = f"""
     Use the following retrieved documents to answer the question clearly, concisely, and accurately. Always give the output in the same language of question asked. 
     Give the output in the {tone} tone and engaging manner. 

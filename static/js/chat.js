@@ -10,6 +10,9 @@ const chatData = {
 };
 
 function addMessageToUI(text, isBot = false) {
+  if(text == ""){
+    return;
+  }
   const messageDiv = document.createElement('div');
   messageDiv.classList.add('message');
   messageDiv.classList.add(isBot ? 'bot-message' : 'user-message');
