@@ -1,98 +1,97 @@
-from flask import Flask, jsonify, request, render_template
 import os
 import requests
+from flask import Flask, request, jsonify, render_template
+from dotenv import load_dotenv
 from langchain_openai.embeddings import AzureOpenAIEmbeddings
 from langchain_chroma import Chroma
-# from langchain.document_loaders import PyPDFLoader
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-# Initialize Flask app
+load_dotenv()
+
 app = Flask(__name__)
 
-# Set up environment variables
-os.environ["AZURE_ENDPOINT"] = "https://tb-lms-azure-openai.openai.azure.com"
-os.environ["AZURE_DEPLOYMENT"] = "text-embedding-3-large"
-os.environ["OPENAI_API_VERSION"] = "2023-05-15"
-api_key = "04f853304acb4c8887d724158fcffe79"
+AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT")
+AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT")
+OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+AZURE_API_KEY = os.getenv("AZURE_API_KEY")
+AZURE_CHAT_ENDPOINT = os.getenv("AZURE_CHAT_ENDPOINT")
 
-# Define functions before Flask routes
 embeddings = AzureOpenAIEmbeddings(
-    azure_endpoint=os.environ["AZURE_ENDPOINT"],
-    azure_deployment=os.environ["AZURE_DEPLOYMENT"],
-    openai_api_version=os.environ["OPENAI_API_VERSION"],
-    api_key=api_key,
+    azure_endpoint=AZURE_ENDPOINT,
+    azure_deployment=AZURE_DEPLOYMENT,
+    openai_api_version=OPENAI_API_VERSION,
+    api_key=OPENAI_API_KEY,
 )
 
-pdf_path = "./templates/PST.pdf"
-loader = PyPDFLoader(pdf_path)
-docs = loader.load()
+try:
+    pdf_path = "./templates/PST.pdf"
+    loader = PyPDFLoader(pdf_path)
+    docs = loader.load()
+    
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    all_splits = text_splitter.split_documents(docs)
 
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-all_splits = text_splitter.split_documents(docs)
+    vector_store = Chroma.from_documents(documents=all_splits, embedding=embeddings)
+    retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 3})
 
-vector_store = Chroma.from_documents(documents=all_splits, embedding=embeddings)
-retriever_ = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 3})
+except Exception as e:
+    raise RuntimeError(f"Error loading documents: {e}")
 
-# Function to call the Azure API
-def Azure_API_Call(prompt):
-    API_KEY = "80667380fac648cda0b315db8effcd5b"
+def azure_api_call(prompt):
     headers = {
         "Content-Type": "application/json",
-        "api-key": API_KEY,
+        "api-key": AZURE_API_KEY,
     }
 
     payload = {
         "messages": [
-            {"role": "system", "content": "Your name is PST Buddy. You are supposed to answer all student queries related to Polaris School of Technology."},
+            {"role": "system", "content": "Your name is PST Buddy. You assist students with queries related to Polaris School of Technology."},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.7,
         "max_tokens": 4000
     }
 
-    ENDPOINT = "https://open-ai-end-point.openai.azure.com/openai/deployments/open_ai_21aug/chat/completions?api-version=2024-02-15-preview"
-
     try:
-        response = requests.post(ENDPOINT, headers=headers, json=payload)
+        response = requests.post(AZURE_CHAT_ENDPOINT, headers=headers, json=payload)
         response.raise_for_status()
         return response.json()['choices'][0]['message']['content'].strip()
     except requests.exceptions.RequestException as e:
-        print(f"An error occurred during the Azure OpenAI API call: {e}")
+        print(f"Azure API call failed: {e}")
         return "Oops! Something went wrong. Please try again later."
 
-# Main Chatbot Function
-def pst_buddy(question, context_from_docs, tone):
-    tone = """
-    You are a friendly and approachable assistant with a warm, conversational tone. Respond in a professional but engaging manner, using clear and concise language. Avoid slang or excessive emojis, and focus on being empathetic, helpful, and polite. Ensure your responses sound natural and human-like, as if you were talking to a friend or colleague, while maintaining a professional attitude. Be informative and polite, addressing the user's query to the best of your ability with a warm tone.
-
-    Important: Always respond in the same language as the user's question. If the user asks in English, reply in English. If the question is in another language, respond accordingly.
+def pst_buddy(question):
     """
-    context_from_docs = ""
-    for doc in retriever_.get_relevant_documents(question):
-        content = doc.page_content.replace('\n', ' ')
-        context_from_docs += ' ' + content
+    Generates a response using context retrieved from documents and Azure API.
+    """
+    retrieved_context = " ".join([doc.page_content.replace("\n", " ") for doc in retriever.get_relevant_documents(question)])
 
+    tone = """
+    You are a friendly and approachable assistant with a warm, professional tone.
+    Respond in clear and concise language, avoiding slang. Ensure responses are engaging and polite.
+    Always answer in the same language as the user's question.
+    """
+    
     prompt = f"""
-    Use the following retrieved documents to answer the question clearly, concisely, and accurately. Always give the output in the same language of question asked. 
-    Give the output in the {tone} tone and engaging manner. 
-
+    Use the retrieved documents below to answer the question clearly and accurately.
+    Maintain a {tone} tone.
+    
     Retrieved Context:
-    {context_from_docs}
+    {retrieved_context}
 
     Question: 
     {question}
-    
-    Important:  
-    1. Avoid saying "I don't know," "The retrieved documents do not explicitly state," or similar uncertain phrases.
-    2. If the information is unclear, provide a best possible answer based on what is available, without indicating a lack of knowledge.
-    3. Focus on giving a precise and useful answer, even if it's not 100% complete. 
-    """
-    
-    response = Azure_API_Call(prompt)
-    return response
 
-# Flask Routes
+    Important:
+    1. Avoid saying "I don't know" or "The retrieved documents do not explicitly state."
+    2. If information is unclear, provide the best possible answer based on available data.
+    3. Focus on precision and usefulness, even if the answer is incomplete.
+    """
+
+    return azure_api_call(prompt)
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -100,10 +99,10 @@ def index():
 @app.route('/get_response', methods=['POST'])
 def get_response():
     user_message = request.json.get('message')
-    context_from_docs = ""  # You can use the logic to retrieve context from docs if needed
-    tone = "Your preferred tone here"
-    
-    response = pst_buddy(user_message, context_from_docs, tone)
+    if not user_message:
+        return jsonify({'error': 'No message provided'}), 400
+
+    response = pst_buddy(user_message)
     return jsonify({'response': response})
 
 if __name__ == '__main__':

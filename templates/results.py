@@ -6,12 +6,15 @@ from langchain_chroma import Chroma
 from langchain.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import gradio as gr
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
-os.environ["AZURE_ENDPOINT"] = "https://tb-lms-azure-openai.openai.azure.com"
-os.environ["AZURE_DEPLOYMENT"] = "text-embedding-3-large"
-os.environ["OPENAI_API_VERSION"] = "2023-05-15"
-api_key = "04f853304acb4c8887d724158fcffe79"
+os.environ["AZURE_ENDPOINT"] = os.getenv("AZURE_ENDPOINT")
+os.environ["AZURE_DEPLOYMENT"] = os.getenv("AZURE_DEPLOYMENT")
+os.environ["OPENAI_API_VERSION"] = os.getenv("OPENAI_API_VERSION")
+api_key = os.getenv("AZURE_API_KEY")
 
 embeddings = AzureOpenAIEmbeddings(
     azure_endpoint=os.environ["AZURE_ENDPOINT"],
@@ -32,7 +35,7 @@ retriever_ = vector_store.as_retriever(search_type="similarity", search_kwargs={
 
 # Function to generate responses
 def Azure_API_Call(prompt):
-    API_KEY = "80667380fac648cda0b315db8effcd5b"
+    API_KEY = os.getenv("AZURE_API_KEY")
     headers = {
         "Content-Type": "application/json",
         "api-key": API_KEY,
